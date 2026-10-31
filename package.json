@@ -1,0 +1,33 @@
+{
+  "name": "twibbonzr",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Twibbonzr clone — buat, bagikan, dan pasang twibbon. Batas global 50 twibbon per 14 hari, foto pengguna hanya disimpan di localStorage.",
+  "type": "module",
+  "scripts": {
+    "setup": "prisma generate && prisma db push && npm run gen:templates && npm run seed",
+    "dev": "node server/index.js",
+    "start": "node server/index.js",
+    "gen:templates": "node scripts/generate-templates.js",
+    "seed": "node prisma/seed.js",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "db:reset": "prisma db push --force-reset && npm run gen:templates && npm run seed"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "express": "^5.3.0"
+  },
+  "devDependencies": {
+    "@napi-rs/canvas": "^1.1.0",
+    "prisma": "^6.19.3"
+  },
+  "allowScripts": {
+    "@prisma/client@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "prisma@6.19.3": true
+  }
+}

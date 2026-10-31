@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Twibbon — Twibbonzr</title>
+<meta name="description" content="Pasang foto kamu di twibbon ini, lalu share linknya ke semua orang.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='9' fill='%23FF3EA5'/><circle cx='16' cy='16' r='7' fill='%2308070C'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Unbounded:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="aura"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark">
+        <svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="9" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="16" cy="16" r="7" fill="currentColor"/></svg>
+      </span>
+      twibbonzr<span class="dot">.</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/#rekomendasi">Jelajahi</a>
+      <a href="/create">Buat</a>
+      <a href="/gallery">Galeri Saya</a>
+    </nav>
+    <div class="nav-right">
+      <span class="quota-pill" id="quotaPill"><span class="pulse"></span> memuat kuota…</span>
+      <a class="btn btn-primary btn-sm" href="/create">+ Buat</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="crumb">
+      <a href="/">Home</a> <span>›</span>
+      <a href="/#rekomendasi">Rekomendasi</a> <span>›</span>
+      <span style="color:var(--ink)" id="crumbTitle">…</span>
+    </div>
+
+    <!-- state error (twibbon hangus / tidak ada) -->
+    <section class="section" id="errorState" style="display:none">
+      <div class="empty">
+        <div class="big">🕰️</div>
+        <h3 id="errorTitle">Twibbon tidak ditemukan</h3>
+        <p id="errorMsg">Link-nya mungkin sudah kadaluarsa — setiap twibbon hanya tayang 14 hari.</p>
+        <a class="btn btn-primary" href="/#rekomendasi">Lihat Rekomendasi Lain</a>
+      </div>
+    </section>
+
+    <section class="section" id="content" style="display:none;padding-top:26px">
+      <div class="split split-wide">
+        <!-- ============== EDITOR ============== -->
+        <div class="panel reveal">
+          <h3>Pasang foto kamu</h3>
+          <p class="sub">Zoom & geser sampai pas, lalu download atau simpan ke galeri lokal.</p>
+
+          <div class="canvas-box">
+            <canvas id="canvas" width="1080" height="1080" aria-label="Preview twibbon"></canvas>
+            <div class="canvas-note">🔒 foto kamu diproses di browser & tidak pernah dikirim ke server</div>
+          </div>
+
+          <div class="controls">
+            <div class="drop" id="photoDrop" tabindex="0" role="button" aria-label="Pilih foto" style="padding:18px">
+              <div class="icon" style="font-size:1.4rem">📷</div>
+              <strong id="photoTitle" style="font-size:.95rem;margin-top:6px">Klik atau tarik foto kamu</strong>
+              <span id="photoHint">JPG/PNG · foto tidak pernah di-upload</span>
+            </div>
+            <input type="file" id="photoFile" accept="image/*" hidden>
+
+            <div class="ctrl">
+              <label for="zoom">Zoom</label>
+              <input type="range" id="zoom" min="50" max="300" value="100">
+              <output id="zoomVal">100%</output>
+            </div>
+            <div class="ctrl">
+              <label for="offsetX">Posisi X</label>
+              <input type="range" id="offsetX" min="-300" max="300" value="0">
+              <output id="offsetXVal">0</output>
+            </div>
+            <div class="ctrl">
+              <label for="offsetY">Posisi Y</label>
+              <input type="range" id="offsetY" min="-300" max="300" value="0">
+              <output id="offsetYVal">0</output>
+            </div>
+          </div>
+
+          <div class="action-row">
+            <button class="btn btn-primary" id="downloadBtn">⬇ Download PNG</button>
+            <button class="btn btn-lime" id="saveBtn">💾 Simpan ke Galeri</button>
+            <button class="btn btn-ghost" id="resetBtn">Reset</button>
+          </div>
+        </div>
+
+        <!-- ============== INFO + SHARE ============== -->
+        <div>
+          <div class="panel reveal">
+            <div id="badges" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+            <h2 id="title" style="font-size:clamp(1.6rem,3vw,2.2rem);margin:14px 0 6px">…</h2>
+            <div class="card-by" id="author">by @…</div>
+            <p class="lead" id="description" style="font-size:.95rem;margin:14px 0 0"></p>
+
+            <div class="countdown" style="margin-top:18px">
+              <div>
+                <div class="cd-label">Hangus dalam</div>
+                <div class="cd-value" id="countdown">–</div>
+              </div>
+              <span class="chip chip-time">auto-delete 14 hari</span>
+            </div>
+
+            <div class="meta">
+              <div class="meta-row"><span class="mk">Dibuat</span><span class="mv" id="mCreated">–</span></div>
+              <div class="meta-row"><span class="mk">Kadaluarsa</span><span class="mv" id="mExpires">–</span></div>
+              <div class="meta-row"><span class="mk">Ukuran</span><span class="mv" id="mSize">1080 × 1080 px</span></div>
+              <div class="meta-row"><span class="mk">Sisa kuota global</span><span class="mv" id="mQuota">–</span></div>
+            </div>
+          </div>
+
+          <div class="panel reveal">
+            <h3>Share twibbon ini</h3>
+            <p class="sub">Siapa pun yang punya link ini bisa ikut pasang.</p>
+            <div class="linkbox">
+              <input id="shareLink" readonly value="">
+              <button class="btn btn-lime btn-sm" id="copyBtn">Salin</button>
+            </div>
+            <div class="share-grid">
+              <a class="share-btn" id="waBtn" target="_blank" rel="noopener">💬 WhatsApp</a>
+              <a class="share-btn" id="xBtn" target="_blank" rel="noopener">𝕏 Twitter</a>
+              <a class="share-btn" id="tgBtn" target="_blank" rel="noopener">✈ Telegram</a>
+              <button class="share-btn" id="nativeBtn">📲 Share…</button>
+            </div>
+          </div>
+
+          <div class="panel reveal">
+            <h3>Coba yang lain</h3>
+            <p class="sub">Twibbon orang lain yang lagi tayang.</p>
+            <div id="others" style="display:flex;flex-wrap:wrap;gap:9px">
+              <span class="chip">memuat…</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-brand">twibbonzr<span style="color:var(--magenta)">.</span></div>
+        <p class="muted" style="margin:6px 0 0;font-size:.9rem;max-width:34ch">Demo hasil reverse engineering.</p>
+      </div>
+      <div class="foot-links">
+        <a href="/#rekomendasi">Jelajahi</a>
+        <a href="/create">Buat Twibbon</a>
+        <a href="/gallery">Galeri Saya</a>
+      </div>
+    </div>
+    <div class="foot-note"><span>© 2026 Twibbonzr Demo · #TwibbonzrDemo</span></div>
+  </div>
+</footer>
+
+<script type="module" src="/js/twibbon.js"></script>
+</body>
+</html>

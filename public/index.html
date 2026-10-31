@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Twibbonzr — buat, share, dan pasang twibbon</title>
+<meta name="description" content="Buat twibbon dalam 60 detik, bagikan linknya, dan biarin semua orang ikut pasang. Kuota global 50 twibbon per 14 hari. Foto kamu cuma disimpan di browser.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='9' fill='%23FF3EA5'/><circle cx='16' cy='16' r='7' fill='%2308070C'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Unbounded:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="aura"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark">
+        <svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="9" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="16" cy="16" r="7" fill="currentColor"/></svg>
+      </span>
+      twibbonzr<span class="dot">.</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/#rekomendasi" class="active">Jelajahi</a>
+      <a href="/create">Buat</a>
+      <a href="/gallery">Galeri Saya</a>
+    </nav>
+    <div class="nav-right">
+      <span class="quota-pill" id="quotaPill"><span class="pulse"></span> memuat kuota…</span>
+      <a class="btn btn-primary btn-sm" href="/create">+ Buat</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-stickers">
+        <span class="sticker sticker-y s1">14 hari doang</span>
+        <span class="sticker sticker-l s2">tanpa login!</span>
+      </div>
+      <span class="eyebrow">✦ reverse engineering demo</span>
+      <h1>Pasang twibbon,<br><span class="grad-text">sebar vibes</span> kamu.</h1>
+      <p class="lead">
+        Buat twibbon dalam 60 detik, kirim linknya ke semua orang, beres.
+        Foto kamu diproses <b style="color:var(--lime)">100% di browser</b> —
+        tidak pernah dikirim ke server, cuma disimpan di localStorage.
+      </p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="/create">+ Buat Twibbon Sekarang</a>
+        <a class="btn btn-ghost" href="#rekomendasi">Lihat Area Rekomendasi ↓</a>
+      </div>
+
+      <div class="stats">
+        <div class="stat c-magenta">
+          <div class="k" id="statActive">–</div>
+          <div class="l">Twibbon aktif</div>
+        </div>
+        <div class="stat c-lime">
+          <div class="k" id="statQuota">–</div>
+          <div class="l">Sisa kuota global</div>
+        </div>
+        <div class="stat c-sky">
+          <div class="k" id="statGallery">–</div>
+          <div class="l">Foto di galeri lokal</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MARQUEE ============ -->
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-track">
+      <span>#TwibbonzrDemo ✦ share linknya ✦ 50 twibbon / 14 hari ✦ foto aman di browser ✦ siapapun boleh buat ✦</span>
+      <span>#TwibbonzrDemo ✦ share linknya ✦ 50 twibbon / 14 hari ✦ foto aman di browser ✦ siapapun boleh buat ✦</span>
+    </div>
+  </div>
+
+  <!-- ============ AREA REKOMENDASI ============ -->
+  <section class="section" id="rekomendasi">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div>
+          <span class="eyebrow">🎯 area rekomendasi</span>
+          <h2 style="margin-top:14px">Twibbon orang lain<br>yang lagi tayang</h2>
+          <p>Semua orang bebas memilih twibbon siapa pun yang terpampang di sini — klik kartunya,
+            pasang foto kamu, lalu share balik. Semua twibbon hangus otomatis setelah 2 minggu.</p>
+        </div>
+        <a class="btn btn-lime btn-sm" href="/create">+ Twibbon kamu</a>
+      </div>
+
+      <div class="grid" id="grid">
+        <div class="skeleton sk-card"></div>
+        <div class="skeleton sk-card"></div>
+        <div class="skeleton sk-card"></div>
+        <div class="skeleton sk-card"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CARA KERJA ============ -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div>
+          <span class="eyebrow">⚙️ mekanisme</span>
+          <h2 style="margin-top:14px">Cara kerjanya, 5 langkah</h2>
+          <p>Hasil reverse engineering cara kerja Twibbonzr — semuanya jalan di sisi browser.</p>
+        </div>
+      </div>
+      <div class="steps">
+        <div class="step reveal">
+          <div class="n">1</div>
+          <h3>Template = PNG berlubang</h3>
+          <p>Bagian transparan di tengah adalah "lubang" tempat foto kamu tampil. Bagian solid jadi overlay.</p>
+        </div>
+        <div class="step reveal">
+          <div class="n">2</div>
+          <h3>Punya ID & link share</h3>
+          <p>Saat dibuka, frontend fetch <code>GET /api/templates/:slug</code> lalu load PNG dari storage.</p>
+        </div>
+        <div class="step reveal">
+          <div class="n">3</div>
+          <h3>Foto dibaca lokal</h3>
+          <p>Foto dibaca via <code>FileReader</code> → objek <code>Image</code>. Tidak dikirim ke mana pun.</p>
+        </div>
+        <div class="step reveal">
+          <div class="n">4</div>
+          <h3>Composite di Canvas</h3>
+          <p>Urutan wajib: gambar foto dulu, baru PNG twibbon di atasnya. Alpha channel bekerja otomatis.</p>
+        </div>
+        <div class="step reveal">
+          <div class="n">5</div>
+          <h3>Download / simpan lokal</h3>
+          <p><code>canvas.toDataURL()</code> → download PNG, atau simpan ke galeri localStorage kamu.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PRIVASI ============ -->
+  <section class="section">
+    <div class="wrap">
+      <div class="privacy reveal">
+        <div class="lock">🔒</div>
+        <div>
+          <h3>Foto kamu nggak pernah ke server</h3>
+          <p>
+            Yang di-upload ke server hanya <b style="color:var(--ink)">template twibbon</b>-nya (PNG dari kamu).
+            Foto orang-orang yang memakai twibbon? Diproses di canvas browser, disimpan di
+            <b style="color:var(--ink)">localStorage</b> perangkat masing-masing, dan tidak masuk database.
+            Hapus dari Galeri, ya, kalau mau hilang.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-brand">twibbonzr<span style="color:var(--magenta)">.</span></div>
+        <p class="muted" style="margin:6px 0 0;font-size:.9rem;max-width:34ch">
+          Demo hasil reverse engineering. Semua orang boleh buat, share, dan pasang.
+        </p>
+      </div>
+      <div class="foot-links">
+        <a href="/#rekomendasi">Jelajahi</a>
+        <a href="/create">Buat Twibbon</a>
+        <a href="/gallery">Galeri Saya</a>
+        <a href="/t/support-kami">Contoh Share Link</a>
+      </div>
+    </div>
+    <div class="foot-note">
+      <span>© 2026 Twibbonzr Demo · #TwibbonzrDemo</span>
+      <span>Kuota global 50 twibbon per 14 hari · auto-expire 2 minggu</span>
+    </div>
+  </div>
+</footer>
+
+<script type="module" src="/js/home.js"></script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buat Twibbon — Twibbonzr</title>
+<meta name="description" content="Upload PNG berlubang transparan, kasih judul, bagikan linknya. Kuota global 50 twibbon per 14 hari.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='9' fill='%23FF3EA5'/><circle cx='16' cy='16' r='7' fill='%2308070C'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Unbounded:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="aura"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark">
+        <svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="9" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="16" cy="16" r="7" fill="currentColor"/></svg>
+      </span>
+      twibbonzr<span class="dot">.</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/#rekomendasi">Jelajahi</a>
+      <a href="/create" class="active">Buat</a>
+      <a href="/gallery">Galeri Saya</a>
+    </nav>
+    <div class="nav-right">
+      <span class="quota-pill" id="quotaPill"><span class="pulse"></span> memuat kuota…</span>
+      <a class="btn btn-primary btn-sm" href="/create">+ Buat</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="crumb"><a href="/">Home</a> <span>›</span> <span style="color:var(--ink)">Buat Twibbon</span></div>
+
+    <section class="section" style="padding-top:24px">
+      <div class="section-head reveal">
+        <div>
+          <span class="eyebrow">🎨 bikin twibbon</span>
+          <h2 style="margin-top:14px">Upload PNG, kasih judul,<br>bagikan linknya</h2>
+          <p>Tidak perlu login. Twibbon kamu otomatis masuk Area Rekomendasi untuk semua orang,
+            dan hangus sendiri setelah 2 minggu.</p>
+        </div>
+      </div>
+
+      <div class="split">
+        <!-- ================= FORM ================= -->
+        <form class="panel reveal" id="form" novalidate>
+          <h3>Detail twibbon</h3>
+          <p class="sub">Isi yang bikin orang pengen ikut pasang.</p>
+
+          <div class="field">
+            <label for="author">Nama kamu / handle</label>
+            <input class="input" id="author" name="author" maxlength="40" placeholder="mis. naya.png" required>
+          </div>
+
+          <div class="field">
+            <label for="title">Judul twibbon</label>
+            <input class="input" id="title" name="title" maxlength="80" placeholder="mis. Support Kami!" required>
+            <span class="hint">3–80 karakter. Muncul di kartu rekomendasi.</span>
+          </div>
+
+          <div class="field">
+            <label for="description">Deskripsi <span class="muted" style="font-weight:600">(opsional)</span></label>
+            <textarea class="textarea" id="description" maxlength="280" placeholder="Buat apa twibbon ini? Siapa yang cocok pakai?"></textarea>
+            <span class="count"><span id="descCount">0</span>/280</span>
+          </div>
+
+          <div class="field">
+            <label>File twibbon (PNG)</label>
+            <div class="drop" id="drop" tabindex="0" role="button" aria-label="Upload file twibbon">
+              <div class="icon">🖼️</div>
+              <strong id="dropTitle">Klik atau tarik PNG ke sini</strong>
+              <span id="dropHint">PNG dengan lubang transparan · min 400×400 · maks 6 MB</span>
+            </div>
+            <input type="file" id="file" accept="image/png" hidden>
+          </div>
+
+          <div class="notice" style="margin-bottom:18px">
+            <span>⏳</span>
+            <span>Twibbon kamu tayang <b>14 hari</b> lalu otomatis dihapus dari database dan storage.
+              Kuota global saat ini: <b id="quotaInline">memuat…</b></span>
+          </div>
+
+          <button class="btn btn-primary btn-block" id="submit" type="submit">Terbitkan Twibbon →</button>
+        </form>
+
+        <!-- ================= PREVIEW ================= -->
+        <div class="panel reveal">
+          <h3>Preview</h3>
+          <p class="sub">Yang dilihat orang lain di Area Rekomendasi.</p>
+
+          <div class="canvas-box">
+            <div class="checker" style="aspect-ratio:1;display:grid;place-items:center">
+              <img id="preview" alt="Preview twibbon" style="width:100%;height:100%;object-fit:cover;display:none">
+              <div id="previewEmpty" style="text-align:center;color:var(--muted);padding:24px">
+                <div style="font-size:2.4rem">🕳️</div>
+                <p style="margin:8px 0 0;font-size:.9rem">Belum ada PNG.<br>Lubang transparan di tengah<br>itu tempat foto orang.</p>
+              </div>
+            </div>
+            <div class="canvas-note" id="previewMeta">belum ada file</div>
+          </div>
+
+          <div class="meta">
+            <div class="meta-row"><span class="mk">Ukuran gambar</span><span class="mv" id="mSize">–</span></div>
+            <div class="meta-row"><span class="mk">Format</span><span class="mv" id="mFormat">–</span></div>
+            <div class="meta-row"><span class="mk">Masa tayang</span><span class="mv">14 hari</span></div>
+            <div class="meta-row"><span class="mk">Biaya</span><span class="mv" style="color:var(--lime)">Gratis</span></div>
+          </div>
+
+          <div class="notice warn">
+            <span>💡</span>
+            <span>Tips: pakai PNG 1080×1080 dengan bagian tengah transparan.
+              Kalau PDF/ JPG, lubangnya nggak akan kelihatan.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-brand">twibbonzr<span style="color:var(--magenta)">.</span></div>
+        <p class="muted" style="margin:6px 0 0;font-size:.9rem;max-width:34ch">Demo hasil reverse engineering.</p>
+      </div>
+      <div class="foot-links">
+        <a href="/#rekomendasi">Jelajahi</a>
+        <a href="/create">Buat Twibbon</a>
+        <a href="/gallery">Galeri Saya</a>
+      </div>
+    </div>
+    <div class="foot-note"><span>© 2026 Twibbonzr Demo · #TwibbonzrDemo</span></div>
+  </div>
+</footer>
+
+<script type="module" src="/js/create.js"></script>
+</body>
+</html>

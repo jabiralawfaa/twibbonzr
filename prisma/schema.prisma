@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Sebuah twibbon (template PNG berlubang transparan).
+/// Menyimpan metadata + nama file gambar, bukan biner gambar.
+/// `expiresAt` = createdAt + 14 hari, lewat itu row & file dihapus otomatis.
+model Twibbon {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String   @default("")
+  author      String   @default("Anonim")
+  imageName   String
+  isSeed      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+
+  @@index([createdAt])
+  @@index([expiresAt])
+}
