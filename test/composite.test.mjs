@@ -74,3 +74,19 @@ test('fitSize custom: clamp per sisi, input tak valid ditolak', () => {
   assert.equal(fitSize('abc', 10), null);
   assert.equal(fitSize(0, -5), null);
 });
+
+test('rotasi foto: cover tetap penuh di sudut, template tidak ikut berputar', () => {
+  const canvas = createCanvas(1080, 1080);
+  const photo = solid(100, 100, '#00ff00');
+  // template: kotak merah 200×200 di kiri-atas, sisanya transparan
+  const tmpl = createCanvas(1080, 1080);
+  const tctx = tmpl.getContext('2d');
+  tctx.fillStyle = '#ff0000';
+  tctx.fillRect(0, 0, 200, 200);
+
+  composite(canvas, { template: tmpl, photo, rotate: 45 });
+  // pojok kiri-atas = milik template (digambar terakhir, tidak berputar)
+  assert.deepEqual(px(canvas, 5, 5).slice(0, 3), [255, 0, 0]);
+  // pojok kanan-bawah = foto; tanpa skala-rotasi yang benar ini jadi background
+  assert.deepEqual(px(canvas, 1074, 1074).slice(0, 3), [0, 255, 0]);
+});

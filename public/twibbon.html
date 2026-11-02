@@ -57,7 +57,7 @@
         <!-- ============== EDITOR ============== -->
         <div class="panel reveal">
           <h3>Pasang foto kamu</h3>
-          <p class="sub">Zoom & geser sampai pas, lalu download atau simpan ke galeri lokal.</p>
+          <p class="sub">Zoom, geser, & rotasi sampai pas, lalu download atau simpan ke galeri lokal.</p>
 
           <div class="canvas-box">
             <canvas id="canvas" width="1080" height="1080" aria-label="Preview twibbon"></canvas>
@@ -101,6 +101,11 @@
               <label for="offsetY">Posisi Y</label>
               <input type="range" id="offsetY" min="-300" max="300" value="0">
               <output id="offsetYVal">0</output>
+            </div>
+            <div class="ctrl">
+              <label for="rotate">Rotasi</label>
+              <input type="range" id="rotate" min="-180" max="180" value="0">
+              <output id="rotateVal">0°</output>
             </div>
           </div>
 

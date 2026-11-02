@@ -133,7 +133,7 @@ export function readFileAsDataURL(file) {
  *   A. foto user sebagai background  ->  B. PNG twibbon di atasnya.
  * Alpha channel PNG membuat bagian lubang transparan menampilkan foto.
  */
-export function composite(canvas, { template = null, photo = null, zoom = 1, offsetX = 0, offsetY = 0 } = {}) {
+export function composite(canvas, { template = null, photo = null, zoom = 1, offsetX = 0, offsetY = 0, rotate = 0 } = {}) {
   const ctx = canvas.getContext('2d');
   const W = canvas.width;
   const H = canvas.height;
@@ -145,11 +145,22 @@ export function composite(canvas, { template = null, photo = null, zoom = 1, off
   ctx.fillRect(0, 0, W, H);
 
   if (photo) {
-    // foto cover seluruh canvas (rasio output bisa bukan 1:1)
-    const scale = Math.max(W / photo.width, H / photo.height) * zoom;
+    // rotasi mengubah kebutuhan skala: sudut kanvas dipetakan ke ruang foto
+    // agar cover tetap penuh pada sudut berapa pun (bukan sekadar bounding-box)
+    const rad = (rotate * Math.PI) / 180;
+    const c = Math.abs(Math.cos(rad));
+    const sn = Math.abs(Math.sin(rad));
+    const needW = W * c + H * sn;
+    const needH = W * sn + H * c;
+    const scale = Math.max(needW / photo.width, needH / photo.height) * zoom;
     const dw = photo.width * scale;
     const dh = photo.height * scale;
-    ctx.drawImage(photo, (W - dw) / 2 + offsetX, (H - dh) / 2 + offsetY, dw, dh);
+    // offset diterapkan di ruang layar (sebelum rotasi) supaya geser X/Y tetap arah layar
+    ctx.save();
+    ctx.translate(W / 2 + offsetX, H / 2 + offsetY);
+    ctx.rotate(rad);
+    ctx.drawImage(photo, -dw / 2, -dh / 2, dw, dh);
+    ctx.restore();
   }
 
   if (template) {

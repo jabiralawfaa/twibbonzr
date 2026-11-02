@@ -26,6 +26,7 @@ const state = {
   zoom: 1,
   x: 0,
   y: 0,
+  rotate: 0,
   info: null,
 };
 
@@ -36,6 +37,7 @@ function renderCanvas() {
     zoom: state.zoom,
     offsetX: state.x,
     offsetY: state.y,
+    rotate: state.rotate,
   });
 }
 
@@ -182,6 +184,7 @@ const bind = (id, key, out, fmt) => {
 bind('#zoom', 'zoom', '#zoomVal', (v) => `${v}%`);
 bind('#offsetX', 'x', '#offsetXVal', (v) => `${v}`);
 bind('#offsetY', 'y', '#offsetYVal', (v) => `${v}`);
+bind('#rotate', 'rotate', '#rotateVal', (v) => `${v}°`);
 
 /* ---------------- ukuran output (rasio + custom) ---------------- */
 
@@ -252,12 +255,15 @@ function resetControls() {
   state.zoom = 1;
   state.x = 0;
   state.y = 0;
+  state.rotate = 0;
   qs('#zoom').value = 100;
   qs('#offsetX').value = 0;
   qs('#offsetY').value = 0;
+  qs('#rotate').value = 0;
   qs('#zoomVal').textContent = '100%';
   qs('#offsetXVal').textContent = '0';
   qs('#offsetYVal').textContent = '0';
+  qs('#rotateVal').textContent = '0°';
   qs('#photoTitle').textContent = 'Klik atau tarik foto kamu';
   qs('#photoHint').textContent = 'JPG/PNG · foto tidak pernah di-upload';
   photoFile.value = '';
