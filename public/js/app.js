@@ -135,31 +135,30 @@ export function readFileAsDataURL(file) {
  */
 export function composite(canvas, { template = null, photo = null, zoom = 1, offsetX = 0, offsetY = 0 } = {}) {
   const ctx = canvas.getContext('2d');
-  const S = canvas.width;
+  const W = canvas.width;
+  const H = canvas.height;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.clearRect(0, 0, S, S);
+  ctx.clearRect(0, 0, W, H);
+
+  // background solid supaya area letterbox (rasio beda) tidak transparan
+  ctx.fillStyle = '#0e0d16';
+  ctx.fillRect(0, 0, W, H);
 
   if (photo) {
-    // background solid supaya hasil export tidak punya pixel bolong
-    ctx.fillStyle = '#0e0d16';
-    ctx.fillRect(0, 0, S, S);
-
-    const ratio = photo.width / photo.height;
-    let dw;
-    let dh;
-    if (ratio > 1) {
-      dh = S * zoom;
-      dw = dh * ratio;
-    } else {
-      dw = S * zoom;
-      dh = dw / ratio;
-    }
-    const x = (S - dw) / 2 + offsetX;
-    const y = (S - dh) / 2 + offsetY;
-    ctx.drawImage(photo, x, y, dw, dh);
+    // foto cover seluruh canvas (rasio output bisa bukan 1:1)
+    const scale = Math.max(W / photo.width, H / photo.height) * zoom;
+    const dw = photo.width * scale;
+    const dh = photo.height * scale;
+    ctx.drawImage(photo, (W - dw) / 2 + offsetX, (H - dh) / 2 + offsetY, dw, dh);
   }
 
-  if (template) ctx.drawImage(template, 0, 0, S, S);
+  if (template) {
+    // template contain-fit di tengah — tidak pernah melar walau rasio beda
+    const s = Math.min(W / template.width, H / template.height);
+    const dw = template.width * s;
+    const dh = template.height * s;
+    ctx.drawImage(template, (W - dw) / 2, (H - dh) / 2, dw, dh);
+  }
 }
 
 export function downloadDataUrl(dataUrl, filename) {

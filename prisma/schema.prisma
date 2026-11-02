@@ -1,14 +1,17 @@
 generator client {
+  // prisma-client (default v7) hanya mengeluarkan TypeScript dan wajib punya
+  // output; project ini vanilla JS tanpa build step, jadi pakai generator
+  // lama yang masih didukung v7 dan men-generate .js ke node_modules.
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
 }
 
 /// Sebuah twibbon (template PNG berlubang transparan).
-/// Menyimpan metadata + nama file gambar, bukan biner gambar.
+/// Menyimpan metadata + referensi gambar, bukan biner gambar.
+/// `imageName` = nama file lokal (data/uploads/) ATAU URL Vercel Blob (https://…).
 /// `expiresAt` = createdAt + 14 hari, lewat itu row & file dihapus otomatis.
 model Twibbon {
   id          String   @id @default(cuid())

@@ -2,32 +2,40 @@
   "name": "twibbonzr",
   "version": "1.0.0",
   "private": true,
-  "description": "Twibbonzr clone — buat, bagikan, dan pasang twibbon. Batas global 50 twibbon per 14 hari, foto pengguna hanya disimpan di localStorage.",
+  "description": "Twibbonzr — buat, bagikan, dan pasang twibbon. Batas global 50 twibbon per 14 hari, foto pengguna hanya disimpan di localStorage.",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "setup": "prisma generate && prisma db push && npm run gen:templates && npm run seed",
+    "postinstall": "prisma generate",
+    "setup": "prisma generate && prisma db push && node scripts/generate-templates.js && node prisma/seed.js",
     "dev": "node server/index.js",
     "start": "node server/index.js",
+    "test": "node --test test/",
+    "build": "prisma generate && prisma migrate deploy && node prisma/seed.js",
+    "vercel-build": "prisma generate && prisma migrate deploy && node prisma/seed.js",
     "gen:templates": "node scripts/generate-templates.js",
     "seed": "node prisma/seed.js",
-    "db:push": "prisma db push",
+    "db:push": "prisma generate && prisma db push",
     "db:studio": "prisma studio",
-    "db:reset": "prisma db push --force-reset && npm run gen:templates && npm run seed"
-  },
-  "prisma": {
-    "seed": "node prisma/seed.js"
+    "migrate:dev": "prisma migrate dev --name init",
+    "migrate:deploy": "prisma migrate deploy",
+    "db:reset": "prisma generate && prisma db push --force-reset && node scripts/generate-templates.js && node prisma/seed.js"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.3",
-    "express": "^5.3.0"
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
+    "@vercel/blob": "^2.8.2",
+    "express": "^5.3.0",
+    "pg": "^8.23.1",
+    "prisma": "^7.10.1"
   },
   "devDependencies": {
-    "@napi-rs/canvas": "^1.1.0",
-    "prisma": "^6.19.3"
+    "@napi-rs/canvas": "^1.1.0"
   },
   "allowScripts": {
-    "@prisma/client@6.19.3": true,
-    "@prisma/engines@6.19.3": true,
-    "prisma@6.19.3": true
+    "@prisma/engines@7.10.1": true,
+    "prisma@7.10.1": true
   }
 }

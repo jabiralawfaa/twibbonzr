@@ -1,7 +1,6 @@
 import express from 'express';
 import crypto from 'node:crypto';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { PrismaClient } from '@prisma/client';
+import { existsSync } from 'node:fs';
 import {
   PORT,
   PUBLIC_DIR,
@@ -10,16 +9,17 @@ import {
   WINDOW_MS,
   expiryDate,
   imageUrl,
+  imagePath,
 } from './lib/config.js';
+import { prisma } from './lib/db.js';
 import { getQuota } from './lib/quota.js';
 import { startCleanup, sweep } from './lib/cleanup.js';
+import { saveTemplate, removeTemplate } from './lib/storage.js';
 
-const prisma = new PrismaClient();
 const app = express();
 
-mkdirSync(UPLOAD_DIR, { recursive: true });
-
-app.use(express.json({ limit: '8mb' }));
+// 4,4 MB: base64 dari PNG 3 MB = ~4,0 MB. Di Vercel batas body = 4,5 MB.
+app.use(express.json({ limit: '4.4mb' }));
 
 /* ------------------------------------------------------------------ */
 /* helpers                                                             */
@@ -123,7 +123,9 @@ app.post('/api/templates', async (req, res, next) => {
 
     const buf = Buffer.from(image.replace(/^data:image\/png;base64,/i, ''), 'base64');
     if (buf.length === 0) return fail(res, 400, 'File gambar kosong.');
-    if (buf.length > MAX_IMAGE_BYTES) return fail(res, 413, 'Ukuran PNG maksimal 6 MB.');
+    if (buf.length > MAX_IMAGE_BYTES) {
+      return fail(res, 413, `Ukuran PNG maksimal ${MAX_IMAGE_BYTES / 1024 / 1024} MB.`);
+    }
 
     const meta = parsePng(buf);
     if (!meta) return fail(res, 400, 'File itu bukan PNG yang valid.');
@@ -134,7 +136,12 @@ app.post('/api/templates', async (req, res, next) => {
       return fail(res, 400, 'Ukuran twibbon maksimal 5000×5000 px.');
     }
 
-    // Kuota dicek di dalam transaksi supaya request paralel tidak tembus 50.
+    // File disimpan DULU (Blob atau lokal), baru transaksi kuota — I/O tidak
+    // boleh memperpanjang transaksi. Kalau transaksi gagal, file dibatalkan.
+    const slug = uniqueSlug(cleanTitle);
+    const file = `${slug}.png`;
+    const storedAs = await saveTemplate(file, buf);
+
     const now = new Date();
     const windowFrom = new Date(now.getTime() - WINDOW_MS);
     let created;
@@ -146,16 +153,13 @@ app.post('/api/templates', async (req, res, next) => {
           err.code = 'QUOTA';
           throw err;
         }
-        const slug = uniqueSlug(cleanTitle);
-        const file = `${slug}.png`;
-        writeFileSync(`${UPLOAD_DIR}/${file}`, buf);
         return tx.twibbon.create({
           data: {
             slug,
             title: cleanTitle,
             description: cleanDesc,
             author: cleanAuthor,
-            imageName: file,
+            imageName: storedAs,
             isSeed: false,
             createdAt: now,
             expiresAt: expiryDate(now),
@@ -163,6 +167,7 @@ app.post('/api/templates', async (req, res, next) => {
         });
       });
     } catch (err) {
+      await removeTemplate(storedAs); // jangan tinggalkan file yatim
       if (err.code === 'QUOTA') {
         const quota = await getQuota(prisma);
         res.setHeader('Retry-After', '3600');
@@ -185,20 +190,58 @@ app.post('/api/templates', async (req, res, next) => {
 });
 
 /* ------------------------------------------------------------------ */
+/* cron: bersihkan twibbon kedaluwarsa                                 */
+/* ------------------------------------------------------------------ */
+// Dipanggil Vercel Cron tiap hari 03.00 UTC dengan header
+// `Authorization: Bearer ${CRON_SECRET}`. Lokal bisa dipanggil manual.
+app.get('/api/cron/cleanup', async (req, res, next) => {
+  try {
+    const secret = process.env.CRON_SECRET;
+    const auth = req.headers.authorization || '';
+    if (secret && auth !== `Bearer ${secret}`) return fail(res, 401, 'Unauthorized.');
+    const removed = await sweep(prisma);
+    ok(res, { removed });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* ------------------------------------------------------------------ */
 /* static assets                                                       */
 /* ------------------------------------------------------------------ */
 
-// Gambar template yang di-upload (disimpan di data/uploads/, bukan di DB).
-// CORS dibuka supaya aman dipakai sebagai sumber <canvas>.
+// File lokal (mode tanpa Vercel Blob). CORS dibuka supaya aman dipakai <canvas>.
 app.get('/uploads/:file', (req, res) => {
   const name = String(req.params.file);
   if (!/^[a-zA-Z0-9_-]+\.png$/.test(name)) return fail(res, 400, 'Nama file tidak valid.');
-  const file = `${UPLOAD_DIR}/${name}`;
+  const file = imagePath({ isSeed: false, imageName: name });
   if (!existsSync(file)) return fail(res, 404, 'File tidak ditemukan.');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   res.setHeader('Cache-Control', 'public, max-age=3600');
   res.type('image/png').sendFile(file);
+});
+
+// Template yang tersimpan di Vercel Blob di-proxy lewat sini: same-origin,
+// jadi canvas tidak pernah kena CORS / tainted canvas.
+app.get('/tpl/:id', async (req, res, next) => {
+  try {
+    const t = await prisma.twibbon.findUnique({ where: { id: req.params.id } });
+    if (!t || !/^https?:\/\//i.test(t.imageName)) {
+      return fail(res, 404, 'Gambar tidak ditemukan.');
+    }
+    const upstream = await fetch(t.imageName);
+    if (!upstream.ok) return fail(res, 502, 'Gambar tidak bisa dimuat.');
+    const buf = Buffer.from(await upstream.arrayBuffer());
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.send(buf);
+  } catch (err) {
+    next(err);
+  }
 });
 
 app.use(express.static(PUBLIC_DIR, { index: false }));
@@ -218,16 +261,37 @@ app.use('/api', (req, res) => fail(res, 404, 'Endpoint tidak ditemukan.'));
 app.use((err, req, res, next) => {
   if (err?.type === 'entity.parse.failed') return fail(res, 400, 'JSON tidak valid.');
   if (err?.type === 'entity.too.large') return fail(res, 413, 'Payload terlalu besar.');
+  if (err?.code === 'DB_NOT_CONFIGURED') return fail(res, 503, err.message);
+  if (['P1001', 'P1008', 'ECONNREFUSED', 'ENOTFOUND', 'ETIMEDOUT'].includes(err?.code)) {
+    return fail(res, 503, 'Database belum bisa diakses. Cek DATABASE_URL / DATABASE_URL_POOLED.');
+  }
   console.error('[server]', err);
   fail(res, 500, 'Terjadi kesalahan di server.');
 });
 
 /* ------------------------------------------------------------------ */
-app.listen(PORT, async () => {
-  await sweep(prisma).catch((e) => console.error('[cleanup]', e.message));
-  startCleanup(prisma);
-  console.log(`\n  ▟ Twibbonzr jalan → http://localhost:${PORT}`);
-  console.log('  ▸ kuota global   : 50 twibbon / 14 hari');
-  console.log('  ▸ database       : prisma/dev.db (SQLite)');
-  console.log('  ▸ upload folder  : data/uploads/\n');
-});
+// Di Vercel tidak ada app.listen() — fungsi diekspor lewat api/index.js.
+// Interval cleanup juga hanya jalan di proses lokal (di sana pakai Cron).
+if (!process.env.VERCEL) {
+  app.listen(PORT, async () => {
+    await sweep(prisma).catch((e) => console.error('[cleanup]', e.message));
+    startCleanup(prisma);
+    const dbHost = (() => {
+      const raw = process.env.DATABASE_URL_POOLED || process.env.DATABASE_URL;
+      if (!raw) return '(belum di-set — API akan menjawab 503)';
+      try {
+        return new URL(raw).host;
+      } catch {
+        return '(ter-set)';
+      }
+    })();
+    console.log(`\n  ▟ Twibbonzr jalan → http://localhost:${PORT}`);
+    console.log('  ▸ kuota global   : 50 twibbon / 14 hari');
+    console.log(`  ▸ database       : ${dbHost}`);
+    console.log(
+      `  ▸ file template  : ${process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL ? 'Vercel Blob' : 'data/uploads/'}\n`
+    );
+  });
+}
+
+export default app;

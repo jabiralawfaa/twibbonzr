@@ -309,7 +309,7 @@ h3 { font-size: 1.06rem; letter-spacing: -0.02em; }
 
 /* ---------- editor ---------- */
 .canvas-box { position: relative; border-radius: var(--r); overflow: hidden; border: 1px solid var(--line); }
-.canvas-box canvas { width: 100%; height: auto; display: block; }
+.canvas-box canvas { width: 100%; height: auto; max-height: 58vh; object-fit: contain; display: block; }
 .canvas-note {
   display: flex; gap: 8px; align-items: center; justify-content: center;
   font-size: 0.78rem; color: var(--muted); padding: 10px; background: rgba(255, 255, 255, 0.03);
@@ -331,6 +331,33 @@ input[type='range']::-moz-range-thumb {
   width: 16px; height: 16px; border-radius: 50%; background: var(--magenta); border: 3px solid #0a0710; cursor: grab;
 }
 .action-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+
+/* ---------- pilihan ukuran output ---------- */
+.ratio-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; }
+.ratio-label {
+  font-size: 0.82rem; font-weight: 800; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.06em; margin-right: 4px;
+}
+.ratio-btn {
+  padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--line);
+  background: var(--bg-2); color: var(--ink); font-weight: 800; font-size: 0.82rem;
+  cursor: pointer; transition: 0.15s; font-variant-numeric: tabular-nums;
+}
+.ratio-btn:hover { border-color: var(--lime); transform: translateY(-2px); }
+.ratio-btn.active {
+  background: var(--lime); color: #0a0710; border-color: var(--lime);
+  box-shadow: 3px 3px 0 rgba(183, 255, 60, 0.3);
+}
+.ratio-btn:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+.ratio-custom { display: inline-flex; align-items: center; gap: 6px; }
+.ratio-custom[hidden] { display: none; }
+.ratio-custom input[type='number'] {
+  width: 76px; padding: 7px 9px; border-radius: var(--r-sm);
+  border: 1.5px solid var(--line); background: var(--bg-2); color: var(--ink);
+  font-weight: 800; font-size: 0.85rem; font-variant-numeric: tabular-nums; outline: none;
+}
+.ratio-custom input[type='number']:focus { border-color: var(--sky); }
+.ratio-x, .ratio-px { color: var(--muted); font-weight: 800; font-size: 0.8rem; }
 
 /* ---------- share ---------- */
 .share-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 14px; }

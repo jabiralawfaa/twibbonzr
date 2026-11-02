@@ -60,8 +60,8 @@ async function handleFile(file) {
     toast('Format harus PNG (punya alpha channel).', 'err');
     return;
   }
-  if (file.size > 6 * 1024 * 1024) {
-    toast('Ukuran file maksimal 6 MB.', 'err');
+  if (file.size > 3 * 1024 * 1024) {
+    toast('Ukuran file maksimal 3 MB.', 'err');
     return;
   }
   try {

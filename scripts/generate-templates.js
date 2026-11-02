@@ -11,7 +11,6 @@
  *
  * Hasilnya PNG RGBA asli, bisa langsung di-composite di <canvas> browser.
  */
-import { createCanvas } from '@napi-rs/canvas';
 import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -130,7 +129,8 @@ function fitFont(ctx, text, maxWidth, startSize) {
   return size;
 }
 
-export function renderTemplate(spec) {
+export async function renderTemplate(spec) {
+  const { createCanvas } = await import('@napi-rs/canvas');
   const canvas = createCanvas(SIZE, SIZE);
   const ctx = canvas.getContext('2d');
 
@@ -191,7 +191,7 @@ async function main() {
   for (const spec of TEMPLATES) {
     const target = join(OUT_DIR, spec.file);
     const exists = existsSync(target);
-    const canvas = renderTemplate(spec);
+    const canvas = await renderTemplate(spec);
     const png = await canvas.encode('png');
     writeFileSync(target, png);
     written += 1;

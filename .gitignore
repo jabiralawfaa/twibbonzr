@@ -4,3 +4,9 @@ prisma/dev.db
 prisma/dev.db-journal
 .env
 npm-debug.log*
+generated/
+.vercel/
+.env.local
+
+.vercel
+.env*

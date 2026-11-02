@@ -1,6 +1,7 @@
 import {
   api,
   qs,
+  qsa,
   esc,
   toast,
   fmtDate,
@@ -67,7 +68,7 @@ async function boot() {
   qs('#mExpires').textContent = fmtDate(t.expiresAt);
   qs('#badges').innerHTML = `
     <span class="chip ${t.isSeed ? 'chip-seed' : 'chip-hot'}">${t.isSeed ? '⭐ official' : '🔥 tayang sekarang'}</span>
-    <span class="chip">1080 × 1080 px</span>
+    <span class="chip" id="chipSize">${canvas.width} × ${canvas.height} px</span>
     <span class="chip chip-lime">PNG + alpha</span>`;
   startCountdown(qs('#countdown'), t.expiresAt);
 
@@ -178,6 +179,68 @@ bind('#zoom', 'zoom', '#zoomVal', (v) => `${v}%`);
 bind('#offsetX', 'x', '#offsetXVal', (v) => `${v}`);
 bind('#offsetY', 'y', '#offsetYVal', (v) => `${v}`);
 
+/* ---------------- ukuran output (rasio + custom) ---------------- */
+const MIN_SIDE = 400;
+const MAX_SIDE = 4096;
+// batas piksel aman untuk canvas di iOS (~16,7 MP)
+const MAX_PIXELS = 16777216;
+
+function applySize(w, h) {
+  w = Math.round(Number(w));
+  h = Math.round(Number(h));
+  if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return;
+  w = Math.min(MAX_SIDE, Math.max(MIN_SIDE, w));
+  h = Math.min(MAX_SIDE, Math.max(MIN_SIDE, h));
+  if (w * h > MAX_PIXELS) {
+    const k = Math.sqrt(MAX_PIXELS / (w * h));
+    w = Math.max(MIN_SIDE, Math.floor(w * k));
+    h = Math.max(MIN_SIDE, Math.floor(h * k));
+  }
+  canvas.width = w;
+  canvas.height = h;
+  const chip = qs('#chipSize');
+  if (chip) chip.textContent = `${w} × ${h} px`;
+  renderCanvas();
+}
+
+const ratioRow = qs('#ratioRow');
+const ratioCustom = qs('#ratioCustom');
+const ratioW = qs('#ratioW');
+const ratioH = qs('#ratioH');
+
+ratioRow?.addEventListener('click', (e) => {
+  const btn = e.target.closest('button.ratio-btn');
+  if (!btn || !ratioRow.contains(btn)) return;
+  qsa('.ratio-btn', ratioRow).forEach((b) => b.classList.remove('active'));
+  btn.classList.add('active');
+  const custom = btn.hasAttribute('data-custom');
+  if (ratioCustom) ratioCustom.hidden = !custom;
+  const w = custom ? ratioW?.value : btn.dataset.w;
+  const h = custom ? ratioH?.value : btn.dataset.h;
+  applySize(w, h);
+  // input custom selalu mencerminkan ukuran aktif
+  if (ratioW) ratioW.value = canvas.width;
+  if (ratioH) ratioH.value = canvas.height;
+});
+
+const onCustomInput = () => {
+  if (!ratioCustom || ratioCustom.hidden) return;
+  const w = Number(ratioW?.value);
+  const h = Number(ratioH?.value);
+  if (!w || !h) return;
+  applySize(w, h);
+};
+// 'input' menerapkan sesaat; 'change' (blur/enter) menulis balik nilai yang sudah di-clamp
+ratioW?.addEventListener('input', onCustomInput);
+ratioH?.addEventListener('input', onCustomInput);
+for (const el of [ratioW, ratioH]) {
+  el?.addEventListener('change', () => {
+    onCustomInput();
+    if (ratioW) ratioW.value = canvas.width;
+    if (ratioH) ratioH.value = canvas.height;
+  });
+}
+
 function resetControls() {
   state.photo = null;
   state.zoom = 1;
@@ -203,7 +266,7 @@ qs('#resetBtn').addEventListener('click', () => {
 qs('#downloadBtn').addEventListener('click', () => {
   if (!state.photo) return toast('Upload foto dulu sebelum download.', 'err');
   downloadDataUrl(canvas.toDataURL('image/png'), `twibbon-${slug}.png`);
-  toast('Hasil didownload sebagai PNG 1080×1080.');
+  toast(`Hasil didownload sebagai PNG ${canvas.width}×${canvas.height}.`);
 });
 
 qs('#saveBtn').addEventListener('click', () => {

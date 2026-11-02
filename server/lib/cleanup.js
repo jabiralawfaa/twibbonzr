@@ -1,5 +1,5 @@
-import { unlinkSync } from 'node:fs';
-import { imagePath, WINDOW_MS } from './config.js';
+import { WINDOW_MS } from './config.js';
+import { removeTemplate } from './storage.js';
 
 /**
  * Hapus twibbon yang lewat 2 minggu: file gambar dulu, lalu row di database.
@@ -15,7 +15,7 @@ export async function sweep(prisma, { log = true } = {}) {
   let filesRemoved = 0;
   for (const t of expired) {
     try {
-      unlinkSync(imagePath(t));
+      await removeTemplate(t.imageName);
       filesRemoved += 1;
     } catch {
       /* file mungkin sudah tidak ada — biarkan */

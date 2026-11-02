@@ -64,6 +64,21 @@
             <div class="canvas-note">🔒 foto kamu diproses di browser & tidak pernah dikirim ke server</div>
           </div>
 
+          <div class="ratio-row" id="ratioRow" role="group" aria-label="Pilih ukuran output">
+            <span class="ratio-label">Ukuran</span>
+            <button type="button" class="ratio-btn active" data-w="1080" data-h="1080">1:1</button>
+            <button type="button" class="ratio-btn" data-w="1080" data-h="1350">4:5</button>
+            <button type="button" class="ratio-btn" data-w="1080" data-h="1920">9:16</button>
+            <button type="button" class="ratio-btn" data-w="1920" data-h="1080">16:9</button>
+            <button type="button" class="ratio-btn" data-custom="1">Custom</button>
+            <span class="ratio-custom" id="ratioCustom" hidden>
+              <input type="number" id="ratioW" min="400" max="4096" step="1" value="1080" aria-label="Lebar output (px)">
+              <span class="ratio-x">×</span>
+              <input type="number" id="ratioH" min="400" max="4096" step="1" value="1080" aria-label="Tinggi output (px)">
+              <span class="ratio-px">px</span>
+            </span>
+          </div>
+
           <div class="controls">
             <div class="drop" id="photoDrop" tabindex="0" role="button" aria-label="Pilih foto" style="padding:18px">
               <div class="icon" style="font-size:1.4rem">📷</div>
