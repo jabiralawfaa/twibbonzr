@@ -10,6 +10,7 @@ import {
   loadImage,
   readFileAsDataURL,
   composite,
+  fitSize,
   downloadDataUrl,
   gallery,
   shareTargets,
@@ -118,6 +119,9 @@ async function boot() {
   try {
     state.template = await loadImage(t.imageUrl);
     qs('#mSize').textContent = `${state.template.naturalWidth} × ${state.template.naturalHeight} px`;
+    // default output = ukuran asli template buatan pembuat; pemakai bebas mengganti
+    applySize(state.template.naturalWidth, state.template.naturalHeight, { keepRatio: true });
+    syncRatioControls();
   } catch (err) {
     toast(err.message, 'err');
   }
@@ -180,26 +184,14 @@ bind('#offsetX', 'x', '#offsetXVal', (v) => `${v}`);
 bind('#offsetY', 'y', '#offsetYVal', (v) => `${v}`);
 
 /* ---------------- ukuran output (rasio + custom) ---------------- */
-const MIN_SIDE = 400;
-const MAX_SIDE = 4096;
-// batas piksel aman untuk canvas di iOS (~16,7 MP)
-const MAX_PIXELS = 16777216;
 
-function applySize(w, h) {
-  w = Math.round(Number(w));
-  h = Math.round(Number(h));
-  if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return;
-  w = Math.min(MAX_SIDE, Math.max(MIN_SIDE, w));
-  h = Math.min(MAX_SIDE, Math.max(MIN_SIDE, h));
-  if (w * h > MAX_PIXELS) {
-    const k = Math.sqrt(MAX_PIXELS / (w * h));
-    w = Math.max(MIN_SIDE, Math.floor(w * k));
-    h = Math.max(MIN_SIDE, Math.floor(h * k));
-  }
-  canvas.width = w;
-  canvas.height = h;
+function applySize(w, h, opts) {
+  const fit = fitSize(w, h, opts);
+  if (!fit) return;
+  canvas.width = fit.w;
+  canvas.height = fit.h;
   const chip = qs('#chipSize');
-  if (chip) chip.textContent = `${w} × ${h} px`;
+  if (chip) chip.textContent = `${fit.w} × ${fit.h} px`;
   renderCanvas();
 }
 
@@ -208,19 +200,33 @@ const ratioCustom = qs('#ratioCustom');
 const ratioW = qs('#ratioW');
 const ratioH = qs('#ratioH');
 
+// samakan kontrol rasio dengan ukuran kanvas saat ini:
+// cocokkan dengan preset; bila tidak ada yang cocok → tombol Custom aktif
+function syncRatioControls(forceCustom = false) {
+  if (!ratioRow) return;
+  const btns = qsa('.ratio-btn', ratioRow);
+  const customBtn = btns.find((b) => b.hasAttribute('data-custom'));
+  const match = forceCustom
+    ? null
+    : btns.find(
+        (b) =>
+          !b.hasAttribute('data-custom') &&
+          Number(b.dataset.w) === canvas.width &&
+          Number(b.dataset.h) === canvas.height
+      );
+  const active = match || customBtn;
+  btns.forEach((b) => b.classList.toggle('active', b === active));
+  if (ratioCustom) ratioCustom.hidden = active !== customBtn;
+  if (ratioW) ratioW.value = canvas.width;
+  if (ratioH) ratioH.value = canvas.height;
+}
+
 ratioRow?.addEventListener('click', (e) => {
   const btn = e.target.closest('button.ratio-btn');
   if (!btn || !ratioRow.contains(btn)) return;
-  qsa('.ratio-btn', ratioRow).forEach((b) => b.classList.remove('active'));
-  btn.classList.add('active');
   const custom = btn.hasAttribute('data-custom');
-  if (ratioCustom) ratioCustom.hidden = !custom;
-  const w = custom ? ratioW?.value : btn.dataset.w;
-  const h = custom ? ratioH?.value : btn.dataset.h;
-  applySize(w, h);
-  // input custom selalu mencerminkan ukuran aktif
-  if (ratioW) ratioW.value = canvas.width;
-  if (ratioH) ratioH.value = canvas.height;
+  applySize(custom ? ratioW?.value : btn.dataset.w, custom ? ratioH?.value : btn.dataset.h);
+  syncRatioControls(custom);
 });
 
 const onCustomInput = () => {

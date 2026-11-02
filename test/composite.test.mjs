@@ -11,7 +11,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createCanvas } from '@napi-rs/canvas';
 
-const { composite } = await import('../public/js/app.js');
+const { composite, fitSize } = await import('../public/js/app.js');
 
 const px = (canvas, x, y) => [...canvas.getContext('2d').getImageData(x, y, 1, 1).data];
 const solid = (w, h, color) => {
@@ -58,4 +58,19 @@ test('foto cover-fit memenuhi seluruh canvas lanskap', () => {
   assert.equal(r, 255);
   assert.equal(g, 0);
   assert.equal(b, 0);
+});
+
+test('fitSize keepRatio: rasio template terjaga saat melewati batas', () => {
+  assert.deepEqual(fitSize(1080, 1920, { keepRatio: true }), { w: 1080, h: 1920 });
+  assert.deepEqual(fitSize(5000, 5000, { keepRatio: true }), { w: 4096, h: 4096 });
+  // 5000×3000 (rasio 5:3) → diperkecil proporsional, bukan di-clamp per sisi
+  assert.deepEqual(fitSize(5000, 3000, { keepRatio: true }), { w: 4096, h: 2457 });
+});
+
+test('fitSize custom: clamp per sisi, input tak valid ditolak', () => {
+  assert.deepEqual(fitSize(9999, 1080), { w: 4096, h: 1080 });
+  assert.deepEqual(fitSize(100, 6000), { w: 400, h: 4096 });
+  assert.deepEqual(fitSize(1080, 1080), { w: 1080, h: 1080 });
+  assert.equal(fitSize('abc', 10), null);
+  assert.equal(fitSize(0, -5), null);
 });

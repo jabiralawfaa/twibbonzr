@@ -161,6 +161,34 @@ export function composite(canvas, { template = null, photo = null, zoom = 1, off
   }
 }
 
+/** Batas ukuran output: per sisi 400..4096 px, total maks 16,7 MP (aman untuk canvas iOS). */
+export const SIZE_MIN = 400;
+export const SIZE_MAX = 4096;
+export const SIZE_MAX_PIXELS = 16777216;
+
+/**
+ * Clamp ukuran output ke batas aman. Mengembalikan {w,h} atau null bila tidak valid.
+ * keepRatio=true  → skalakan proporsional (default = ukuran asli template, rasio terjaga)
+ * keepRatio=false → clamp per sisi (user mengetik angka eksplisit di kolom custom)
+ */
+export function fitSize(w, h, { keepRatio = false } = {}) {
+  w = Math.round(Number(w));
+  h = Math.round(Number(h));
+  if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return null;
+  if (!keepRatio) {
+    return {
+      w: Math.min(SIZE_MAX, Math.max(SIZE_MIN, w)),
+      h: Math.min(SIZE_MAX, Math.max(SIZE_MIN, h)),
+    };
+  }
+  const k = Math.min(1, SIZE_MAX / w, SIZE_MAX / h, Math.sqrt(SIZE_MAX_PIXELS / (w * h)));
+  if (k >= 1) return { w, h };
+  return {
+    w: Math.max(SIZE_MIN, Math.floor(w * k)),
+    h: Math.max(SIZE_MIN, Math.floor(h * k)),
+  };
+}
+
 export function downloadDataUrl(dataUrl, filename) {
   const a = document.createElement('a');
   a.href = dataUrl;
